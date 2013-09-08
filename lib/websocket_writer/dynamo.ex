@@ -15,6 +15,9 @@ defmodule WebsocketWriter.Dynamo do
     # You can turn off static assets by setting it to false
     static_route: "/static"
 
+  # config :server,
+  #   dispatch: WebsocketWriter.Cowboy.make_dispatch(WebsocketWriter.Routes)
+
   # Uncomment the lines below to enable the cookie session store
   # config :dynamo,
   #   session_store: Session.CookieStore,
