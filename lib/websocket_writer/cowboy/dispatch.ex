@@ -11,14 +11,32 @@ defmodule WebsocketWriter.Cowboy.Dispatch do
   defmacro __before_compile__(_env) do
     quote do
       def dispatch do
-        [ { :_, List.insert_at(@dispatch, -1, @default_dispatch) }]
+        paths = [ @default_dispatch | @dispatch ]
+        [ { :_, Enum.reverse([ @default_dispatch | @dispatch ]) }]
       end
     end
   end
 
-  defmacro match(path, [ to: to ]) do
+  defmacro root([ to: to ]) do
     quote do
-      @dispatch List.insert_at(@dispatch, -1, { unquote(path), unquote(to), [] })
+      path = { "/", unquote(to), [] }
+      @dispatch [ path | @dispatch ]
+    end
+  end
+
+  defmacro match(path, options) do
+    to          = Keyword.get options, :to, nil
+    constraints = Keyword.get options, :constraints, nil
+
+    path = cond do
+      !Keyword.has_key?(options, :to) ->
+        raise ArgumentError, message: "Expected :to to be given as option"
+      constraints -> quote do: { unquote(path), unquote(constraints), unquote(to), [] }
+      true        -> quote do: { unquote(path), unquote(to), [] }
+    end
+
+    quote bind_quoted: [ path: path ] do
+      @dispatch [ path | @dispatch ]
     end
   end
 end
