@@ -39,15 +39,37 @@ defmodule Cowboy.DispatchTest do
     ] }]
   end
 
-  defmodule IntConstraint do
+  defmodule IntConstraintRoute do
     use WebsocketWriter.Cowboy.Dispatch
     match "/:version", to: Handler1, constraints: [ version: :int ]
   end
 
   test "#match with an 'int' constraint" do
-    assert IntConstraint.dispatch == [{ :_, [
+    assert IntConstraintRoute.dispatch == [{ :_, [
       { "/:version", [ { :version, :int } ], Handler1, [] },
       { :_, Dynamo.Cowboy.Handler, ApplicationRouter }
     ] }]
+  end
+
+  defmodule FunConstraintRoute do
+    use WebsocketWriter.Cowboy.Dispatch
+    match "/:name", to: Handler1, constraints: [ name: &__MODULE__.fun_test/1 ]
+    def fun_test(_value), do: true
+  end
+
+  test "#match with a 'function' constraint" do
+    assert FunConstraintRoute.dispatch == [{ :_, [
+      { "/:name", [ { :name, &FunConstraintRoute.fun_test/1 } ], Handler1, [] },
+      { :_, Dynamo.Cowboy.Handler, ApplicationRouter }
+    ] }]
+  end
+
+  defmodule DefaultRoute do
+    use WebsocketWriter.Cowboy.Dispatch
+    default to: Handler2, with: OtherRouter
+  end
+
+  test "use a different default handler" do
+    assert DefaultRoute.dispatch == [{ :_, [{ :_, Handler2, OtherRouter }] }]
   end
 end

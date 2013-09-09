@@ -4,17 +4,27 @@ defmodule WebsocketWriter.Cowboy.Dispatch do
       import unquote(__MODULE__)
       @before_compile unquote(__MODULE__)
       @dispatch []
-      @default_dispatch { :_, Dynamo.Cowboy.Handler, ApplicationRouter }
+      @default { Dynamo.Cowboy.Handler, ApplicationRouter }
     end
   end
 
   defmacro __before_compile__(_env) do
     quote do
       def dispatch do
-        paths = [ @default_dispatch | @dispatch ]
-        [ { :_, Enum.reverse([ @default_dispatch | @dispatch ]) }]
+        paths = [ default_dispatch(@default) | @dispatch ]
+        [ { :_, Enum.reverse(paths) } ]
       end
     end
+  end
+
+  def default_dispatch({ mod, options }) do
+    { :_, mod, options }
+  end
+
+  defmacro default(options) do
+    to   = Keyword.get options, :to, Dynamo.Cowboy.Handler
+    with = Keyword.get options, :with, ApplicationRouter
+    quote do: @default { unquote(to), unquote(with) }
   end
 
   defmacro root([ to: to ]) do
