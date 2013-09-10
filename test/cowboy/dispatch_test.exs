@@ -1,6 +1,6 @@
 Code.require_file "../test_helper.exs", __DIR__
 
-defmodule Cowboy.DispatchTest do
+defmodule WebsocketWriter.Cowboy.DispatchTest do
   use ExUnit.Case, async: true
 
   defmodule NoRoutes do
