@@ -1,20 +1,24 @@
 defmodule WebsocketWriter.Cowboy.HandlerBuilder do
-  defmacro __using__(_options) do
-    quote do
-      import unquote(__MODULE__)
+
+  defmodule Websocket do
+    defmacro on_init(options // []) do
+      protocol = Keyword.get options, :protocol, :http
+      quote do
+        def init({ :tcp, unquote(protocol) }, req, opts) do
+          state = [ init: opts ]
+          { :upgrade, :protocol, :cowboy_websocket, req, state }
+        end
+      end
     end
   end
 
-  defmacro make_handler(type, options // []) do
-    unless type == :websocket do
-      raise ArgumentError, message: "Expected handler type to be :websocket."
+  defmacro __using__(options) do
+    builder = case Keyword.get(options, :type) do
+      :websocket -> Websocket
+      _ -> raise ArgumentError, message: "Expected handler type to be :websocket."
     end
-    protocol = Keyword.get options, :protocol, :http
     quote do
-      def init({ :tcp, unquote(protocol) }, req, opts) do
-        state = [ init: opts ]
-        { :upgrade, :protocol, :cowboy_websocket, req, state }
-      end
+      import unquote(builder)
     end
   end
 end
